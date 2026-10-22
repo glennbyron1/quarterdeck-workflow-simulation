@@ -1,0 +1,133 @@
+@page "/cases/{caseId}"
+@using Quarterdeck.Presentation
+@model Quarterdeck.App.Pages.Cases.DetailsModel
+@{ ViewData["Title"] = Model.Case is null ? "Case unavailable" : $"Case {Model.Case.CaseId}"; }
+<nav class="breadcrumb" aria-label="Breadcrumb"><a asp-page="/Index">Overview</a><span aria-hidden="true">/</span><a asp-page="/Work/Index">My work</a><span aria-hidden="true">/</span>Lifecycle case</nav>
+@if (Model.Case is null)
+{
+    <section class="error-panel"><p class="eyebrow">Safe stop</p><h1>Case unavailable</h1><p>No exact synthetic case matched that reference. Nothing was changed.</p><code>case_not_found</code></section>
+}
+else
+{
+    <header class="page-heading"><div><p class="eyebrow">Lifecycle workspace · @Model.Case.CaseId</p><h1>@Model.Case.DisplayLabel</h1><p><code>@Model.Case.PersonReference</code> · @Model.Case.DepartmentLabel</p><p>Review the authoritative case revision and exact next action before submitting.</p></div><div class="identity"><span>Current state</span><strong>@Model.Case.Headline</strong><small>@Model.Case.SiteId · revision @Model.Case.CaseRevision · @Model.Case.StateSource fact</small></div></header>
+    @if (Model.CommandResultCode is not null)
+    {
+        <p class="state" role="status" tabindex="-1">@Model.ResultMessage <code>@Model.CommandResultCode</code></p>
+    }
+    <div class="workspace-grid">
+        <div class="workspace-main">
+            @if (Model.Corrections.Count > 0)
+            {
+                <section class="workspace-card"><h2>HR / IT correction history</h2>
+                @foreach (var correction in Model.Corrections)
+                {
+                    <article><h3>@(correction.Action == "returned_to_hr" ? "Returned to HR" : "HR resubmitted")</h3>
+                    <p>@correction.Comment</p>
+                    @if (correction.ProposedUsername is not null) { <p>Proposed username: <strong>@correction.ProposedUsername</strong> (not yet confirmed)</p> }
+                    <small>@correction.Actor · @correction.OccurredAt.ToString("u")</small></article>
+                }
+                </section>
+            }
+            @if (Model.Case.Condition == WorkflowPresentationCondition.NeedsHrCorrection)
+            {
+                <section class="workspace-card"><h2>Needs HR correction</h2><p>Read IT's reason above. Reply with the correction and send this case back to IT. The original request stays in the history.</p>
+                    <form method="post" asp-page-handler="ResubmitToIt">
+                        <input type="hidden" name="ExpectedCaseRevision" value="@Model.Case.CaseRevision" />
+                        <label asp-for="ProposedUsername">Corrected proposed username (optional)</label><input asp-for="ProposedUsername" maxlength="80" autocomplete="off" />
+                        <small>Simulation only: use a TEST- reference. This suggestion does not create or bind an account.</small>
+                        <label asp-for="HrCorrectionComment">HR correction / reply (required)</label><textarea asp-for="HrCorrectionComment" maxlength="500" rows="3" required></textarea>
+                        <button type="submit">Resubmit to IT</button>
+                    </form>
+                </section>
+            }
+            @if (Model.Case.Condition is WorkflowPresentationCondition.WaitingForIt or WorkflowPresentationCondition.ReadyForItValidation)
+            {
+                <section class="workspace-card"><details><summary>Return to HR</summary><p>Use this when HR needs to clarify or correct the onboarding request. This is not a final rejection.</p>
+                    <form method="post" asp-page-handler="ReturnToHr">
+                        <input type="hidden" name="ExpectedCaseRevision" value="@Model.Case.CaseRevision" />
+                        <label for="return-reason">Reason for returning (required)</label><textarea id="return-reason" name="HrCorrectionComment" maxlength="500" rows="3" required></textarea>
+                        <button type="submit">Return to HR</button>
+                    </form>
+                </details></section>
+            }
+            <section class="workspace-card" aria-labelledby="next-action"><p class="eyebrow">1 · Summary and action</p><h2 id="next-action">Next safe action</h2><dl class="summary-grid"><div><dt>Required role</dt><dd>@Model.RoleName(Model.Case.NextAction.Role)</dd></div><div><dt>Safe-stop code</dt><dd><code>@Model.Case.NextAction.SafeStopCode</code></dd></div></dl><div class="confirmation"><strong>Required:</strong> @Model.Case.NextAction.Action</div></section>
+            @if (Model.Case.Condition == WorkflowPresentationCondition.WaitingForIt)
+            {
+                <section class="workspace-card" aria-labelledby="resolve-account">
+                    <h2 id="resolve-account">Confirm the user's account</h2>
+                    <p>Enter the exact account that IT created with its normal tools. Quarterdeck rechecks the current role, site, person, account and case revision.</p>
+                    <form method="post" asp-page-handler="Resolve">
+                        <input type="hidden" name="ExpectedCaseRevision" value="@Model.Case.CaseRevision" />
+                        <div><label asp-for="ExactAccountId">Exact account ID</label><input asp-for="ExactAccountId" autocomplete="off" required maxlength="160" /></div>
+                        <div><label asp-for="CorrectionReason">Resolution reason</label><select asp-for="CorrectionReason" required><option value="account_created">Account created with existing tools</option><option value="account_corrected">Account reference corrected</option></select></div>
+                        <button type="submit">Confirm existing account</button>
+                    </form>
+                    <details>
+                        <summary>Simulation fixture setup</summary>
+                        <p>This test-only action represents external IT account creation, then confirms the exact binding. It performs no AD operation and is unavailable outside the simulation host.</p>
+                        <form method="post" asp-page-handler="RegisterSimulationAccount">
+                            <input type="hidden" name="ExpectedCaseRevision" value="@Model.Case.CaseRevision" />
+                            <div><label asp-for="SimulationAccountId">Synthetic account ID</label><input asp-for="SimulationAccountId" autocomplete="off" required maxlength="80" /></div>
+                            <button type="submit">Create test fixture and confirm</button>
+                        </form>
+                    </details>
+                </section>
+            }
+            @if (Model.Case.Condition == WorkflowPresentationCondition.ReadyForItValidation)
+            {
+                <section class="workspace-card" aria-labelledby="seal-request">
+                    <h2 id="seal-request">Seal formal request</h2>
+                    <p>The server rechecks the exact resolved account and records immutable version 1. All values are synthetic.</p>
+                    <form method="post" asp-page-handler="SealFormalRequest">
+                        <input type="hidden" name="ExpectedCaseRevision" value="@Model.Case.CaseRevision" />
+                        <div><label asp-for="FormalAccountId">Resolved account ID</label><input asp-for="FormalAccountId" required maxlength="160" autocomplete="off" /></div>
+                        <div><label asp-for="FakeDeviceId">Fake device ID</label><input asp-for="FakeDeviceId" required maxlength="160" autocomplete="off" /></div>
+                        <div><label asp-for="SyntheticPublicRequestDigest">Synthetic request digest (64 lowercase hexadecimal characters)</label><input asp-for="SyntheticPublicRequestDigest" required minlength="64" maxlength="64" pattern="[0-9a-f]{64}" autocomplete="off" /></div>
+                        <button type="submit">Seal formal version 1</button>
+                    </form>
+                </section>
+            }
+            @if (Model.Case.Condition == WorkflowPresentationCondition.ReadyForSimulatedIssuance)
+            {
+                <section class="workspace-card" aria-labelledby="fake-issuance">
+                    <h2 id="fake-issuance">Start fake issuance</h2>
+                    <p>The server commits durable intent before the independent fake-authority journal can record acceptance. This performs no live CA, directory, card or network operation.</p>
+                    <form method="post" asp-page-handler="StartFakeIssuance" asp-route-formalVersion="@Model.Case.FormalVersion.Version">
+                        <input type="hidden" name="ExpectedCaseRevision" value="@Model.Case.CaseRevision" />
+                        <div><label asp-for="SyntheticPublicRequestReference">Synthetic public request reference</label><input asp-for="SyntheticPublicRequestReference" autocomplete="off" required maxlength="160" pattern="REQ-[A-Z0-9][A-Z0-9-]*" placeholder="REQ-CASE-1042" /></div>
+                        <button type="submit">Commit intent and call fake authority</button>
+                    </form>
+                </section>
+            }
+            @if (Model.FakeIssuance?.OperationId is not null)
+            {
+                <section class="workspace-card" aria-labelledby="issuance-observation">
+                    <h2 id="issuance-observation">Fake issuance recovery</h2>
+                    <dl><dt>Operation</dt><dd><code>@Model.FakeIssuance.OperationId</code></dd><dt>Intent</dt><dd>@Model.FakeIssuance.IntentStatus</dd><dt>Dispatch</dt><dd>@Model.FakeIssuance.DispatchStatus</dd><dt>Result</dt><dd>@Model.FakeIssuance.ResultStatus</dd><dt>Safe state</dt><dd><code>@Model.FakeIssuance.SafeResultCode</code></dd>@if(Model.FakeIssuance.RecoveryFindingId is not null){<dt>Exact recovery finding</dt><dd><code>@Model.FakeIssuance.RecoveryFindingId</code></dd>}</dl>
+                    @if (!Model.FakeIssuance.RetryAllowed)
+                    {
+                        <p>Blind retry is blocked. Observe this exact operation instead.</p>
+                        <form method="post" asp-page-handler="ObserveFakeIssuance" asp-route-operationId="@Model.FakeIssuance.OperationId"><button type="submit">Observe exact operation</button></form>
+                    }
+                    <details><summary>Reconcile exact terminal evidence</summary><p>IT-Issuer may acknowledge only a persisted recovery finding that still matches this exact operation and the current independent journal terminal anchor. Missing, wrong, pending or ambiguous evidence remains unresolved.</p><form method="post" asp-page-handler="ReconcileFakeIssuance" asp-route-operationId="@Model.FakeIssuance.OperationId"><div><label asp-for="RecoveryFindingId">Exact recovery finding ID</label><input asp-for="RecoveryFindingId" required maxlength="36" autocomplete="off" /></div><div><label asp-for="RecoveryReasonCode">Reason code</label><select asp-for="RecoveryReasonCode" required><option value="terminal_evidence_confirmed">Exact terminal evidence confirmed</option></select></div><button type="submit">Reconcile exact evidence</button></form></details>
+                </section>
+            }
+            @if (Model.PolicyApproval?.MandatoryGates.Any(item => !item.Satisfied) == true
+                && Model.Case.FormalVersion.Version is { } gateVersion)
+            {
+                <section class="workspace-card" aria-labelledby="directory-gate">
+                    <h2 id="directory-gate">Record synthetic directory readiness</h2>
+                    <p>This rechecks the current IT role and records only the required fake-fixture gate. It performs no directory operation.</p>
+                    <form method="post" asp-page-handler="ObserveDirectoryGate" asp-route-formalVersion="@gateVersion">
+                        <input type="hidden" name="ExpectedCaseRevision" value="@Model.Case.CaseRevision" />
+                        <button type="submit">Record directory-ready observation</button>
+                    </form>
+                </section>
+            }
+            <section class="workspace-card" aria-labelledby="formal-version"><div class="section-heading"><div><p class="eyebrow">2 · Recorded request</p><h2 id="formal-version">Formal version @Model.Case.FormalVersion.Version</h2></div><a asp-page="/Cases/Review" asp-route-caseId="@Model.Case.CaseId" asp-route-version="@Model.Case.FormalVersion.Version">Review exact version</a></div><dl class="bound-fields">@foreach(var fact in Model.Case.FormalVersion.BoundFields){<div><dt>@fact.Label</dt><dd>@fact.Value <small>@fact.Source fact</small></dd></div>}</dl></section>
+            <section class="workspace-card" aria-labelledby="timeline"><p class="eyebrow">3 · Case history</p><h2 id="timeline">Attributable timeline</h2><ol class="timeline">@foreach(var row in Model.Case.Timeline.OrderBy(item=>item.Sequence)){<li><p><strong>@row.Event</strong> <span class="state">@row.Outcome</span></p><dl><dt>Recorded time</dt><dd><time datetime="@row.OccurredAt.ToString("O")">@row.OccurredAt.ToString("u")</time></dd><dt>Actor / role</dt><dd>@row.ActorReference · @row.Role</dd><dt>Source</dt><dd>@row.Source fact</dd></dl></li>}</ol></section>
+            <section class="workspace-card evidence-receipt" aria-labelledby="audit-trail"><p class="eyebrow">4 · Evidence</p><h2 id="audit-trail">Append-only audit trail</h2><p>Stable identifiers and safe diagnostic codes are shown separately. This view does not replace or rewrite recorded history.</p><p class="receipt-boundary">Author-produced simulation evidence only. This is not proof of identity, card preparation, certificate issuance, CA action or Windows logon.</p><ol class="timeline">@foreach(var row in Model.AuditTrail){<li><p><strong>@row.Action</strong> <span class="state @row.State.CssClass">@row.State.Label</span></p><dl><dt>Authorization / outcome</dt><dd>@row.AuthorizationDecision / @row.Outcome</dd><dt>Event</dt><dd><code>@row.EventId</code> · sequence @row.Sequence</dd><dt>Time</dt><dd><time datetime="@row.OccurredAt.ToString("O")">@row.OccurredAt.ToString("u")</time></dd><dt>Person / account</dt><dd>@row.ActorPersonId / @row.ActorAccountId</dd><dt>Display / role</dt><dd>@row.ActorDisplayLabel / @row.ActorRole</dd><dt>Version / policy</dt><dd>@(row.FormalVersion?.ToString() ?? "none") / @(row.PolicyAuthorityId ?? "none") / @(row.PolicyVersion ?? "none")</dd><dt>Policy digest</dt><dd><code>@(row.PolicyDigest ?? "none")</code></dd><dt>Approval / operation</dt><dd>@(row.ApprovalId ?? "none") / @(row.OperationId ?? "none")</dd><dt>Safe reason / result</dt><dd><code>@row.SafeReason</code> / <code>@row.SafeResult</code></dd><dt>Source</dt><dd>@row.SourceReference</dd></dl></li>}</ol></section>
+        </div>
+        <aside class="workspace-card"><h2>Current facts</h2><dl><dt>Approval</dt><dd>@Model.Case.Approval.Status</dd>@if(Model.PolicyApproval is not null){<dt>Policy</dt><dd>@Model.PolicyApproval.PolicyAuthorityId · @Model.PolicyApproval.PolicyVersion</dd><dt>Policy digest</dt><dd><code>@Model.PolicyApproval.PolicyContentDigest</code></dd><dt>Authoritative simulated clock</dt><dd>@Model.PolicyApproval.ClockStatus @if(Model.PolicyApproval.ObservedAt is not null){<time datetime="@Model.PolicyApproval.ObservedAt.Value.ToString("O")">@Model.PolicyApproval.ObservedAt.Value.ToString("u")</time>}</dd><dt>Approval expiry</dt><dd>@if(Model.PolicyApproval.ExpiresAt is null){<span>Not approved</span>}else{<time datetime="@Model.PolicyApproval.ExpiresAt.Value.ToString("O")">@Model.PolicyApproval.ExpiresAt.Value.ToString("u")</time>} @if(Model.PolicyApproval.RemainingSeconds is not null){<span>(@Model.PolicyApproval.RemainingSeconds server-observed seconds remaining)</span>}</dd><dt>Server authority</dt><dd><code>@Model.PolicyApproval.SafeStopCode</code></dd>}<dt>Operation</dt><dd>@Model.Case.Operation.Status</dd><dt>Dispatch / acceptance</dt><dd>@Model.Case.Operation.DispatchCount / @Model.Case.Operation.AcceptanceCount</dd></dl>@if(Model.PolicyApproval?.MandatoryGates.Any(item=>!item.Satisfied)==true){<h3>Mandatory gates requiring attention</h3><ul>@foreach(var gate in Model.PolicyApproval.MandatoryGates.Where(item=>!item.Satisfied)){<li><code>@gate.GateCode</code>: @gate.Status (@gate.SafeResultCode)</li>}</ul>}<p class="receipt-boundary">These are separate recorded or observed facts. A displayed state or browser countdown never grants dispatch authority.</p></aside>
+    </div>
+}

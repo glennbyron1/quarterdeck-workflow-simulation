@@ -1,0 +1,11 @@
+<Solution>
+  <Project Path="src/Quarterdeck.Core/Quarterdeck.Core.csproj" />
+  <Project Path="src/Quarterdeck.Persistence/Quarterdeck.Persistence.csproj" />
+  <Project Path="src/Quarterdeck.Presentation/Quarterdeck.Presentation.csproj" />
+  <Project Path="src/Quarterdeck.Application/Quarterdeck.Application.csproj" />
+  <Project Path="src/Quarterdeck.App/Quarterdeck.App.csproj" />
+  <Project Path="tests/Quarterdeck.Core.Tests/Quarterdeck.Core.Tests.csproj" />
+  <Project Path="tests/Quarterdeck.Presentation.Tests/Quarterdeck.Presentation.Tests.csproj" />
+  <Project Path="tests/Quarterdeck.Simulation.Tests/Quarterdeck.Simulation.Tests.csproj" />
+  <Project Path="tools/Quarterdeck.RecoveryCrashProbe/Quarterdeck.RecoveryCrashProbe.csproj" />
+</Solution>

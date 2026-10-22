@@ -1,0 +1,45 @@
+@page
+@model Quarterdeck.App.Pages.Requests.NameChangeModel
+@{ ViewData["Title"] = "Request name change"; }
+<header class="page-heading"><div><p class="eyebrow">HR → IT</p><h1>Request name change</h1><p>Keep the same person and account. Send the requested name to IT for review.</p></div></header>
+<p class="notice warning">Simulation only: use fictional names. No AD, username or card is changed here. Do not enter passwords or identity-document details.</p>
+@if (Model.Result is not null) { <p role="status" class="state">Result: <code>@Model.Result</code></p> }
+<form method="get" class="form-card">
+    <label for="person">Existing person</label>
+    <select id="person" name="CaseId" required><option value="">Select a person with a confirmed account</option>
+    @foreach (var person in Model.People) { <option value="@person.CaseId" selected="@(person.CaseId == Model.CaseId)">@person.DisplayLabel · @person.ResolvedAccountId · @person.CaseId</option> }
+    </select><button type="submit">Select person</button>
+</form>
+@if (Model.Selected is { } selected)
+{
+    <form method="post" class="form-card">
+        <h2>@selected.DisplayLabel</h2><p>Username: <strong>@selected.ResolvedAccountId</strong></p>
+        <input type="hidden" asp-for="CaseId" /><input type="hidden" name="ExpectedRevision" value="@selected.CaseRevision" />
+        <div asp-validation-summary="All" role="alert"></div>
+        <label asp-for="RequestedName">Requested full name</label><input asp-for="RequestedName" maxlength="160" required autocomplete="off" />
+        <label asp-for="Comment">Comments (optional)</label><textarea asp-for="Comment" maxlength="500" rows="3"></textarea>
+        <p>The original record stays unchanged. IT decides which systems need updating under site policy.</p>
+        <button type="submit">Send to IT</button>
+    </form>
+}
+<section class="workspace-card"><h2>Name-change requests</h2>
+@if (Model.Requests.Count == 0) { <p>No name-change requests yet.</p> }
+@foreach (var request in Model.Requests)
+{
+    <article class="case-card"><div><h3>@request.CurrentName → @request.RequestedName</h3>
+        <p>Username: @request.Username · <a asp-page="/Cases/Details" asp-route-caseId="@request.CaseId">Original case</a></p>
+        <p>@request.Comment</p><small>Requested by @request.RequestedBy · @request.RequestedAt.ToString("u")</small>
+        @if (request.CompletedBy is null)
+        {
+            <p class="state">Waiting for IT</p>
+            <form method="post" asp-page-handler="Complete"><input type="hidden" name="requestId" value="@request.RequestId" />
+                <label for="comment-@request.RequestId">IT completion note (simulation only)</label>
+                <textarea id="comment-@request.RequestId" name="completionComment" maxlength="500" rows="2" required></textarea>
+                <p>Record the simulated external work. This does not rename AD, change this person's recorded name, or update a card.</p>
+                <button type="submit">Record simulated IT completion</button>
+            </form>
+        }
+        else { <p class="state">Simulation completed</p><p>@request.CompletionComment</p><small>@request.CompletedBy · @request.CompletedAt?.ToString("u")</small> }
+    </div></article>
+}
+</section>

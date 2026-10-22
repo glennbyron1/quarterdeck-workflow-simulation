@@ -1,0 +1,63 @@
+@page
+@using Quarterdeck.Presentation
+@model Quarterdeck.App.Pages.IndexModel
+@{ ViewData["Title"] = "Overview"; }
+
+<section class="signal-board" aria-labelledby="overview-title">
+    <div class="signal-copy">
+        <p class="eyebrow">Lifecycle workflow simulation</p>
+        <h1 id="overview-title">The simulation station is ready.</h1>
+        <p>Follow synthetic credential work from HR intake through IT preparation, verification and recorded delivery. Every action remains inside the fake, server-free authority boundary.</p>
+        <div class="button-row">
+            <a class="button primary" asp-page="/Work/Index">Open my work</a>
+            <a class="button" asp-page="/Requests/NewUser">Request new user</a>
+        </div>
+    </div>
+    <div class="bridge-cluster" aria-label="Simulation status: application running, SQLite persistent, authority fake only">
+        <div class="gauge"><div class="status-ring complete"><span>Live</span></div><small>Application</small></div>
+        <div class="gauge"><div class="status-ring complete"><span>Ready</span></div><small>SQLite</small></div>
+        <div class="gauge"><div class="status-ring held"><span>Fake only</span></div><small>Authority</small></div>
+    </div>
+</section>
+
+<section class="overview-grid" aria-label="Workflow summary">
+    <article class="metric-card"><span>Active work</span><strong>@Model.ActiveCount</strong><small>Cases requiring a next actor</small></article>
+    <article class="metric-card"><span>Needs attention</span><strong>@Model.AttentionCount</strong><small>Safe-stop or recovery cases</small></article>
+    <article class="metric-card"><span>Complete</span><strong>@Model.CompleteCount</strong><small>Finished simulations retained in history</small></article>
+</section>
+
+<section class="panel" aria-labelledby="current-work-title">
+    <div class="panel-heading">
+        <div><p class="eyebrow">Next-actor view</p><h2 id="current-work-title">Current work</h2></div>
+        <a asp-page="/Work/Index">View full queue</a>
+    </div>
+    @if (Model.CurrentWork.Count == 0)
+    {
+        <div class="empty-state"><h3>No active simulated work</h3><p>Create a synthetic intake from My work to exercise the lifecycle.</p></div>
+    }
+    else
+    {
+        <div class="work-table-wrap">
+            <table class="work-table">
+                <thead><tr><th scope="col">Person</th><th scope="col">Request</th><th scope="col">State</th><th scope="col">Next role</th><th scope="col">Action</th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.CurrentWork)
+                {
+                    <tr>
+                        <td><strong>@Model.PersonName(item.DisplayLabel)</strong><small><code>@item.PersonReference</code> · @item.DepartmentLabel</small></td>
+                        <td><a asp-page="/Cases/Details" asp-route-caseId="@item.CaseId">@item.CaseId</a><small>@item.SiteId</small></td>
+                        <td><span class="state">@item.Headline</span></td>
+                        <td>@item.NextAction.Role</td>
+                        <td>@item.NextAction.Action</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<aside class="boundary-strip">
+    <strong>Author-produced simulation</strong>
+    <span>No live AD, CA, PIV, broker, credential or Windows-logon operation is performed or proven here.</span>
+</aside>

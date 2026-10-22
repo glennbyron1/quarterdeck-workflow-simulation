@@ -1,0 +1,16 @@
+@page
+@model Quarterdeck.App.Pages.HelpModel
+@{ ViewData["Title"] = "Help"; }
+<nav class="breadcrumb" aria-label="Breadcrumb"><a asp-page="/Index">Overview</a><span aria-hidden="true">/</span>Help</nav>
+<header class="page-heading"><div><p class="eyebrow">Simulation operator guide</p><h1>How this simulation works</h1><p>Quarterdeck coordinates a controlled lifecycle. It does not become the directory, certificate authority, card, or owner of private keys.</p></div></header>
+<section class="help-grid" aria-label="Workflow steps">
+<article class="workspace-card"><p class="eyebrow">1 · HR request</p><h2>Record intake</h2><p>HR records only a lab-safe case and synthetic person reference. A missing account is a valid stopping point.</p></article>
+<article class="workspace-card"><p class="eyebrow">2 · IT account work</p><h2>Work outside Quarterdeck</h2><p>IT creates the account with existing site tools. Quarterdeck records confirmation of one exact synthetic account; it does not create or enable it.</p></article>
+<article class="workspace-card"><p class="eyebrow">3 · HR verification</p><h2>Verify the person</h2><p>HR records that identity evidence was checked without storing document numbers or copies in this workflow.</p></article>
+<article class="workspace-card"><p class="eyebrow">4 · Exact approval</p><h2>Approve one version</h2><p>The approver reviews all ten bound fields. Any change requires a new version and prevents the old approval from authorizing work.</p></article>
+<article class="workspace-card"><p class="eyebrow">5 · IT simulation</p><h2>Use the fake authority</h2><p>The simulation records intent and a fake-authority outcome. It performs no CA, PIV, broker, directory, card, printer, or Windows-logon operation.</p></article>
+<article class="workspace-card"><p class="eyebrow">6 · Recovery</p><h2>Stop before retrying</h2><p>An interrupted or uncertain result remains unresolved. Only evidence bound to the exact operation can reconcile it; blind retry is blocked.</p></article>
+</section>
+<section class="workspace-card" aria-labelledby="secret-guidance"><h2 id="secret-guidance">Never enter secrets or sensitive identity data</h2><ul><li>No PIN, PUK, password, management key, private key, recovery secret, or token.</li><li>No Social Security number, birth date, passport, driver-license number, or identity-document image.</li><li>No real person name; use synthetic references only.</li></ul></section>
+<section class="workspace-card" aria-labelledby="access-boundary"><h2 id="access-boundary">Local simulation access</h2><p>The host accepts loopback requests only. HR and IT names in the timeline are scenario actors used to exercise separation of duties; they are not authenticated people. Any live implementation must add real caller authentication before network exposure.</p></section>
+<aside class="boundary-strip"><strong>Need to continue?</strong><span>Open <a asp-page="/Work/Index">My work</a>. The projected next role and safe action—not a browser choice—determine what can happen.</span></aside>

@@ -1,0 +1,43 @@
+@{
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>SIMULATION ONLY · @ViewData["Title"] · Quarterdeck</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/v2-visual-baseline.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/case.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/v3-visual-adapter.css" asp-append-version="true">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="simulation-banner" role="status">
+    <strong>SIMULATION ONLY</strong> — Synthetic identities and fake authority. No live AD, CA, PIV, broker or credential operation.
+</div>
+<div class="app-shell">
+    <aside class="site-rail" aria-label="Quarterdeck navigation">
+        <a class="brand" asp-page="/Index"><span class="brand-mark" aria-hidden="true">◇</span><span class="brand-copy"><strong>Quarterdeck</strong><small>Credential station</small></span></a>
+        <nav class="rail-nav" aria-label="Primary">
+            <a class="nav-item" asp-page="/Requests/NameChange"><span class="nav-icon" aria-hidden="true">↔</span><span class="nav-label">Request name change</span></a>
+            <a class="nav-item" asp-page="/Index" aria-current="@(currentPage == "/Index" ? "page" : null)"><span class="nav-icon" aria-hidden="true">⌂</span><span class="nav-label">Home</span></a>
+            <a class="nav-item" asp-page="/Work/Index" aria-current="@(currentPage == "/Work/Index" ? "page" : null)"><span class="nav-icon" aria-hidden="true">☷</span><span class="nav-label">My work</span></a>
+            <a class="nav-item" asp-page="/Requests/NewUser" aria-current="@(currentPage == "/Requests/NewUser" ? "page" : null)"><span class="nav-icon" aria-hidden="true">＋</span><span class="nav-label">Request new user</span></a>
+            <a class="nav-item" asp-page="/Help" aria-current="@(currentPage == "/Help" ? "page" : null)"><span class="nav-icon" aria-hidden="true">?</span><span class="nav-label">Support</span></a>
+        </nav>
+        <div class="rail-footer"><span class="environment">Public simulation</span><div class="rail-identity"><small>Workspace</small><strong>Scenario actors</strong><span>Not authenticated people · fake authority only</span></div></div>
+    </aside>
+    <div class="site-body">
+        <details class="mobile-nav">
+            <summary>Quarterdeck menu</summary>
+            <nav aria-label="Mobile"><a asp-page="/Index">Overview</a><a asp-page="/Work/Index">My work</a><a asp-page="/Requests/NewUser">Request new user</a><a asp-page="/Help">Help</a></nav>
+        </details>
+        <div class="station-strip"><span>Quarterdeck workstation</span><span class="station-state"><span class="ready-dot" aria-hidden="true"></span>Safe simulation active</span></div>
+        <main id="main" tabindex="-1">@RenderBody()</main>
+        <footer><strong>Quarterdeck coordinates. It never holds the keys.</strong><span>Never enter PINs, PUKs, passwords, keys or identity-document details.</span></footer>
+    </div>
+</div>
+</body>
+</html>

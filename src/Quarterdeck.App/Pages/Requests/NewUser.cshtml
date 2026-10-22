@@ -1,0 +1,79 @@
+@page
+@model Quarterdeck.App.Pages.Requests.NewUserModel
+@{ ViewData["Title"] = "Request new user"; }
+
+<nav class="breadcrumb" aria-label="Breadcrumb"><a asp-page="/Index">Overview</a><span aria-hidden="true">/</span><a asp-page="/Work/Index">My work</a><span aria-hidden="true">/</span>Request new user</nav>
+
+<header class="page-heading">
+    <p class="eyebrow">Synthetic HR intake</p>
+    <h1>Request a new user</h1>
+    <p>Record the start of a simulated onboarding case. IT creates any account with the site’s existing tools; Quarterdeck does not create, enable or modify an AD account.</p>
+</header>
+
+<div class="notice warning" role="note">
+    <strong>Use test references only.</strong>
+    <span>Never enter a real name, birth date, document number, PIN, PUK, password, key or other sensitive data.</span>
+</div>
+
+<form method="post" class="form-card" aria-labelledby="request-fields-title">
+    <h2 id="request-fields-title">New-user request</h2>
+    <p>Quarterdeck assigns the next case ID automatically. Leaving the proposed account blank is normal; the case stops at <strong>Waiting for IT</strong> until IT confirms one exact synthetic account.</p>
+    <div asp-validation-summary="ModelOnly" class="validation" role="alert"></div>
+
+    <div class="notice" role="note"><strong>Case ID:</strong><span> Generated when this request is recorded, beginning with <code>SIM-QD-000001</code>.</span></div>
+    <div class="field">
+        <label asp-for="SyntheticDisplayName"></label>
+        <input asp-for="SyntheticDisplayName" autocomplete="off" aria-describedby="name-help name-error">
+        <small id="name-help">A fictional name for this simulation, such as Jordan Lee.</small>
+        <span id="name-error" asp-validation-for="SyntheticDisplayName" class="validation"></span>
+    </div>
+    <div class="field">
+        <label asp-for="PersonId"></label>
+        <input asp-for="PersonId" autocomplete="off" aria-describedby="person-help person-error">
+        <small id="person-help">Use a synthetic name-style reference, such as TEST-JORDAN-LEE. The queue displays Jordan Lee while retaining the exact reference.</small>
+        <span id="person-error" asp-validation-for="PersonId" class="validation"></span>
+    </div>
+    <div class="field">
+        <label asp-for="DepartmentCode"></label>
+        <select asp-for="DepartmentCode" asp-items="Model.Departments" aria-describedby="department-help"><option value="">Select a department</option></select>
+        <small id="department-help">Choose Other only when the configured list has no suitable department.</small>
+        <span asp-validation-for="DepartmentCode" class="validation"></span>
+    </div>
+    <div class="field">
+        <label asp-for="OtherDepartmentLabel"></label>
+        <input asp-for="OtherDepartmentLabel" autocomplete="off" aria-describedby="other-department-help">
+        <small id="other-department-help">Required only for Other; it will be flagged for catalogue review.</small>
+        <span asp-validation-for="OtherDepartmentLabel" class="validation"></span>
+    </div>
+    <div class="field">
+        <label asp-for="SiteId"></label>
+        <select asp-for="SiteId" aria-describedby="site-help"><option value="SITE-A">SITE-A · simulated site</option></select>
+        <small id="site-help">This build exposes only the configured synthetic site.</small>
+    </div>
+    <div class="field">
+        <label asp-for="JobTitle"></label>
+        <input asp-for="JobTitle" autocomplete="off">
+        <span asp-validation-for="JobTitle" class="validation"></span>
+    </div>
+    <div class="field">
+        <label asp-for="EmployeeReference"></label>
+        <input asp-for="EmployeeReference" autocomplete="off" aria-describedby="employee-help">
+        <small id="employee-help">Optional synthetic internal reference; do not enter government IDs or document numbers.</small>
+        <span asp-validation-for="EmployeeReference" class="validation"></span>
+    </div>
+    <div class="field">
+        <label asp-for="CandidateAccountId"></label>
+        <input asp-for="CandidateAccountId" autocomplete="off" aria-describedby="account-help account-error">
+        <small id="account-help">Optional. A proposal is not an authoritative binding; IT must confirm the exact account later.</small>
+        <span id="account-error" asp-validation-for="CandidateAccountId" class="validation"></span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.SafeResultCode))
+    {
+        <div class="notice warning" role="alert"><strong>Request stopped safely.</strong><span> Result: <code>@Model.SafeResultCode</code>. No completion is claimed.</span></div>
+    }
+
+    <div class="button-row"><button type="submit">Record synthetic request</button><a class="cancel-link" asp-page="/Work/Index">Cancel</a></div>
+</form>
+
+<aside class="boundary-strip"><strong>What happens next</strong><span>IT uses existing administration tools outside Quarterdeck, then confirms one exact synthetic account before the request can be sealed.</span></aside>

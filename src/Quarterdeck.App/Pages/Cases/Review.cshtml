@@ -1,0 +1,42 @@
+@page "/cases/{caseId}/versions/{version:long}/review"
+@model Quarterdeck.App.Pages.Cases.ReviewModel
+@{ ViewData["Title"] = Model.Review is null ? "Version unavailable" : $"Review version {Model.Version}"; }
+<nav class="breadcrumb" aria-label="Breadcrumb"><a asp-page="/Index">Overview</a><span aria-hidden="true">/</span><a asp-page="/Work/Index">My work</a><span aria-hidden="true">/</span>@if(Model.Case is not null){<a asp-page="/Cases/Details" asp-route-caseId="@Model.Case.CaseId">@Model.Case.CaseId</a>}<span aria-hidden="true">/</span>Exact version review</nav>
+@if (Model.Case is null || Model.Review is null)
+{
+    <section class="error-panel"><p class="eyebrow">Safe stop</p><h1>Exact version unavailable</h1><p>The requested case and formal version did not match. No approval control is available.</p><code>formal_version_not_found</code></section>
+}
+else
+{
+    <header class="page-heading"><div><p class="eyebrow">Exact request review</p><h1>Review formal version @Model.Version</h1><p>Review all ten bound fields. Changing one requires a new sealed version and invalidates the old approval.</p></div><div class="identity"><span>Case</span><strong>@Model.Case.CaseId</strong><small>revision @Model.Case.CaseRevision · current version @Model.Case.FormalVersion.Version</small></div></header>
+    @if (Model.CommandResultCode is not null)
+    {
+        <p class="state" role="status" tabindex="-1">Command result: <code>@Model.CommandResultCode</code></p>
+    }
+    <section class="workspace-card"><p class="eyebrow">1 · Bound request</p><h2>Fields requiring review</h2><p>Formal requester: <strong>@Model.Review.RequesterReference</strong></p><dl class="bound-fields numbered">@{var number=0;}@foreach(var fact in Model.Review.BoundFields){number++;<div><dt><span aria-hidden="true">@number.</span> @fact.Label</dt><dd>@fact.Value <small>@fact.Source fact</small></dd></div>}</dl></section>
+    @if (Model.Review.PreviousVersion is not null)
+    {
+        <section class="workspace-card"><h2>Changes from version @Model.Review.PreviousVersion</h2><dl class="bound-fields">@foreach(var difference in Model.Review.Differences){<div><dt>@difference.Label</dt><dd>@if(difference.Changed){<span>Changed from <del>@difference.PreviousValue</del> to <ins>@difference.CurrentValue</ins></span>}else{<span>Unchanged: @difference.CurrentValue</span>}</dd></div>}</dl></section>
+    }
+    <section class="workspace-card"><p class="eyebrow">2 · Decision</p><h2>Verification and approval</h2><p><span class="state">@Model.Case.Approval.Status</span></p>
+    @if(Model.PolicyApproval is not null){<p>Sealed policy: <strong>@Model.PolicyApproval.PolicyAuthorityId · @Model.PolicyApproval.PolicyVersion</strong></p><p>Observed clock: @Model.PolicyApproval.ClockStatus. Approval authority: <code>@Model.PolicyApproval.SafeStopCode</code>.</p>}
+    @if (!Model.Review.IsCurrent)
+    {
+        <p>No action is available for this superseded version.</p><code>@Model.Review.SafeStopCode</code>
+    }
+    else if (Model.Case.Condition == Quarterdeck.Presentation.WorkflowPresentationCondition.AwaitingHrVerification)
+    {
+        <form method="post" asp-page-handler="Verify"><input type="hidden" name="ExpectedCaseRevision" value="@Model.Case.CaseRevision"/><button type="submit">Record identity verification</button></form>
+    }
+    else if (Model.Case.Condition == Quarterdeck.Presentation.WorkflowPresentationCondition.AwaitingExactApproval
+        || Model.Case.Condition == Quarterdeck.Presentation.WorkflowPresentationCondition.ApprovalExpired
+        || Model.Case.Condition == Quarterdeck.Presentation.WorkflowPresentationCondition.ApprovalRevoked)
+    {
+        <form method="post" asp-page-handler="Approve"><input type="hidden" name="ExpectedCaseRevision" value="@Model.Case.CaseRevision"/><input type="hidden" asp-for="SiteId"/><input type="hidden" asp-for="PersonId"/><input type="hidden" asp-for="AccountId"/><input type="hidden" asp-for="IntendedUse"/><input type="hidden" asp-for="FakeDeviceId"/><input type="hidden" asp-for="Slot"/><input type="hidden" asp-for="SyntheticPublicRequestDigest"/><input type="hidden" asp-for="FakeAuthority"/><input type="hidden" asp-for="Template"/><input type="hidden" asp-for="PolicyOptionsVersion"/><p>Submitting rechecks all ten fields, current server-side roles, exact version, policy identity and authoritative simulated time.</p><button type="submit">Approve this exact version</button></form>
+    }
+    else
+    {
+        <p>No verification or approval action is available in the current state.</p><code>@Model.Case.NextAction.SafeStopCode</code>
+    }
+    </section>
+}

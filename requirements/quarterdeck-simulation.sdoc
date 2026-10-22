@@ -1,0 +1,86 @@
+[DOCUMENT]
+TITLE: Quarterdeck Workflow Simulation Requirements
+
+[REQUIREMENT]
+UID: SIM-001
+STATUS: Active
+TITLE: Simulation-only execution boundary
+STATEMENT: The public application shall perform no live Active Directory, certificate-authority, Broker, PIV, card, printer, credential, or Windows-logon operation and shall reject a live-adapter selection rather than silently falling back.
+RATIONALE: The public build demonstrates workflow engineering without publishing or activating private lab integrations.
+
+[REQUIREMENT]
+UID: SIM-002
+STATUS: Active
+TITLE: Loopback-only host
+STATEMENT: The public web host shall listen only on loopback and shall not expose a LAN listener.
+RATIONALE: Scenario roles are not production-authenticated identities and the demonstration is intended for one local computer.
+
+[REQUIREMENT]
+UID: SIM-003
+STATUS: Active
+TITLE: Synthetic authorities and identities
+STATEMENT: The application shall use synthetic identities, synthetic accounts, a fake device, and a fake authority only.
+RATIONALE: Real identity records and infrastructure are outside the public demonstration boundary.
+
+[REQUIREMENT]
+UID: SIM-004
+STATUS: Active
+TITLE: Exact request approval
+STATEMENT: Approval shall bind to the exact subject, account, site, request version, policy, and declared material fields; stale or superseded approval shall not authorize progression.
+RATIONALE: Authorization must not float to a different or later request.
+
+[REQUIREMENT]
+UID: SIM-005
+STATUS: Active
+TITLE: Immutable authorization inputs
+STATEMENT: Caller-owned mutable data shall not alter trusted role, subject, account-readiness, or approval state after admission.
+RATIONALE: Trusted authorization state must not be changed through retained mutable references or copy-and-update behavior.
+
+[REQUIREMENT]
+UID: SIM-006
+STATUS: Active
+TITLE: Durable intent before fake dispatch
+STATEMENT: The application shall durably record exact intent before invoking the fake authority; failure to commit intent shall produce zero fake dispatch calls.
+RATIONALE: Persistence failure cannot be treated as permission to perform an external action.
+
+[REQUIREMENT]
+UID: SIM-007
+STATUS: Active
+TITLE: Fail-closed ambiguous recovery
+STATEMENT: A potentially dispatched operation without a durable result shall remain unresolved across restart and shall block conflicting retries until sufficient fake external evidence permits an attributed reconciliation.
+RATIONALE: A crash or timeout does not prove that an external effect did not occur.
+
+[REQUIREMENT]
+UID: SIM-008
+STATUS: Active
+TITLE: Persistent workflow and audit
+STATEMENT: Workflow, approval, attempt, result, correction, and audit facts shall persist in SQLite across application restart with stable actor and request references.
+RATIONALE: A lifecycle record must survive beyond a single process session.
+
+[REQUIREMENT]
+UID: SIM-009
+STATUS: Active
+TITLE: Consistent backup
+STATEMENT: The application shall create a consistent SQLite backup using database-aware backup behavior rather than an uncoordinated raw file copy.
+RATIONALE: WAL and in-flight database state can make ordinary file copies incomplete.
+
+[REQUIREMENT]
+UID: SIM-010
+STATUS: Active
+TITLE: Prohibited sensitive data
+STATEMENT: The application and its user guidance shall prohibit real identity data, passwords, PINs, PUKs, management keys, private keys, recovery secrets, and bearer tokens.
+RATIONALE: The simulation has no need to receive, store, log, or export such data.
+
+[REQUIREMENT]
+UID: SIM-011
+STATUS: Active
+TITLE: Separate lifecycle facts
+STATEMENT: Issued, verified, delivered, returned, and rejected shall remain separate facts and the interface shall not imply physical delivery or Windows logon from simulated issuance.
+RATIONALE: A completed technical action is not proof that later human or physical steps occurred.
+
+[REQUIREMENT]
+UID: SIM-012
+STATUS: Active
+TITLE: Truthful return and correction history
+STATEMENT: Returned or rejected work shall preserve truthful prior state, record an attributed reason, and identify the required next actor without erasing or rewriting earlier history.
+RATIONALE: Recovery work must not manufacture a false clean history.

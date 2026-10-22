@@ -1,0 +1,51 @@
+@page
+@using Quarterdeck.Presentation
+@model Quarterdeck.App.Pages.Work.IndexModel
+@{ ViewData["Title"] = "My work"; }
+<nav class="breadcrumb" aria-label="Breadcrumb"><a asp-page="/Index">Overview</a><span aria-hidden="true">/</span>My work</nav>
+<header class="page-heading">
+    <div><p class="eyebrow">Next-actor queue</p><h1>My work</h1><p>Each case shows the one role and safe action currently required. Filters narrow this view; they never grant authority.</p></div>
+    <a class="button primary" asp-page="/Requests/NewUser">Request new user</a>
+</header>
+<form method="get" class="filters" aria-label="Work queue filters">
+    <label asp-for="Site">Site</label>
+    <select asp-for="Site"><option value="">All sites</option><option>SITE-A</option><option>SITE-B</option></select>
+    <label asp-for="Role">Next role</label>
+    <select asp-for="Role" asp-items="Html.GetEnumSelectList<WorkflowNextRole>()"><option value="">All roles</option></select>
+    <button type="submit">Apply filters</button>
+    <a asp-page="/Work/Index">Clear</a>
+</form>
+@if (Model.NameChanges.Count > 0)
+{
+    <section class="workspace-card"><h2>Name changes · Waiting for IT</h2>
+    @foreach (var change in Model.NameChanges) { <p>@change.CurrentName → @change.RequestedName · <a asp-page="/Requests/NameChange">Review name-change request</a></p> }
+    </section>
+}
+@if (Model.Items.Count == 0 && Model.NameChanges.Count == 0)
+{
+    <section class="empty-state"><h2>No matching simulated work</h2><p>The selected filters hid every case. Clear them to restore the full queue.</p></section>
+}
+else
+{
+    <div class="queue">
+    @foreach (var group in Model.Items.GroupBy(item => item.QueueGroup))
+    {
+        <section class="queue-group" aria-labelledby="group-@group.Key">
+            <h2 id="group-@group.Key">@Model.GroupName(group.Key) <span aria-label="@group.Count() cases">@group.Count()</span></h2>
+            @foreach (var item in group)
+            {
+                <article class="case-card">
+                    <div>
+                        <p class="eyebrow">Synthetic person · @item.CaseId · @item.SiteId · @item.DepartmentLabel</p>
+                        <h3>@Model.PersonName(item.DisplayLabel)</h3>
+                        <small>Person reference: <code>@item.PersonReference</code></small>
+                    </div>
+                    <p><span class="state">@item.Headline</span> <small>@item.StateSource fact</small></p>
+                    <dl><dt>Next role</dt><dd>@Model.RoleName(item.NextAction.Role)</dd><dt>Required action</dt><dd>@item.NextAction.Action</dd><dt>Safe stop</dt><dd><code>@item.NextAction.SafeStopCode</code></dd><dt>Workspace</dt><dd><a class="table-action" asp-page="/Cases/Details" asp-route-caseId="@item.CaseId">Open lifecycle case<span class="visually-hidden"> @item.CaseId</span></a></dd></dl>
+                </article>
+            }
+        </section>
+    }
+    </div>
+}
+<aside class="boundary-strip"><strong>Author-produced simulation view</strong><span>This screen is not evidence of live AD, CA, PIV, physical delivery or Windows logon.</span></aside>

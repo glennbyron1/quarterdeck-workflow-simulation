@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../Quarterdeck.Core/Quarterdeck.Core.csproj" />
+    <ProjectReference Include="../Quarterdeck.Persistence/Quarterdeck.Persistence.csproj" />
+    <ProjectReference Include="../Quarterdeck.Presentation/Quarterdeck.Presentation.csproj" />
+  </ItemGroup>
+</Project>
